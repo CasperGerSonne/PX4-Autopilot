@@ -16,7 +16,7 @@ public:
     ~UartCommander(); // Destructor
     int Uart_Rxtest(int expected);
     int Uart_Txtest();
-  
+
 };
 
 #endif /* UART_COMMANDER_HPP */

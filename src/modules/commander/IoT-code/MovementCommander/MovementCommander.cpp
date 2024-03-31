@@ -46,29 +46,29 @@ int MovementCommander::Movingtest(){
     // Advertise the vehicle_command topic for publication
     send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_TAKEOFF,10.0f);
 
-    printf("sleeping 5\n");
-    sleep(5);
+    printf("sleeping 10\n");
+    sleep(10);
     // forward backwards
-    printf("Forwards backwards");
+    printf("Forwards \n");
     // Advertise the vehicle_command topic for publication
-    send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_CHANGE_SPEED,vehicle_command_s::SPEED_TYPE_GROUNDSPEED,2,-1);
-    printf("sleeping for 5 seconds");
+    send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_CHANGE_SPEED,vehicle_command_s::SPEED_TYPE_GROUNDSPEED,2.0f,100);
+    printf("sleeping for 5 seconds\n");
 
 
     printf("sleeping 5\n");
     sleep(5);
     // forward backwards
-    printf("Forwards backwards");
+    printf("up\n");
     // Advertise the vehicle_command topic for publication
-    send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_CHANGE_SPEED,vehicle_command_s::SPEED_TYPE_CLIMB_SPEED,2,-1);
-    printf("sleeping for 5 seconds");
+    send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_CHANGE_SPEED,vehicle_command_s::SPEED_TYPE_CLIMB_SPEED,2.0f,100);
+    printf("sleeping for 5 seconds\n");
     sleep(5);
-    printf("moving back");
-    send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_CHANGE_SPEED,vehicle_command_s::SPEED_TYPE_DESCEND_SPEED,2,-1);
+    printf("down\n");
+    send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_CHANGE_SPEED,vehicle_command_s::SPEED_TYPE_DESCEND_SPEED,2.0f,100);
 
     // Clean up
 
-    printf("DONE");
+    printf("DONE\n");
 
     return 1;
 

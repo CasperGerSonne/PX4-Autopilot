@@ -73,6 +73,9 @@
 
 #include <uORB/topics/mavlink_log.h>
 #include <uORB/topics/tune_control.h>
+#include <commander/IoT-code/MovementCommander/MovementCommander.hpp>
+
+
 
 typedef enum VEHICLE_MODE_FLAG {
 	VEHICLE_MODE_FLAG_CUSTOM_MODE_ENABLED  = 1,   /* 0b00000001 Reserved for future use. | */
@@ -238,6 +241,13 @@ int Commander::custom_command(int argc, char *argv[])
 	}
 
 #ifndef CONSTRAINED_FLASH
+
+
+
+	if(!strcmp(argv[0], "Movingtest")){
+		MovementCommander movecommander;
+		movecommander.Movingtest();
+	}
 
 	if (!strcmp(argv[0], "calibrate")) {
 		if (argc > 1) {
