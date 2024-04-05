@@ -37,7 +37,7 @@ add_subdirectory(failure_detector)
 add_subdirectory(HealthAndArmingChecks)
 add_subdirectory(ModeUtil)
 add_subdirectory(MulticopterThrowLaunch)
-add_subdirectory(IoT-code)
+
 
 px4_add_module(
 	MODULE modules__commander
@@ -77,7 +77,7 @@ px4_add_module(
 		sensor_calibration
 		world_magnetic_model
         	atmosphere
-		IoT_Code
+
 	)
 
 px4_add_unit_gtest(SRC mag_calibration_test.cpp LINKLIBS modules__commander)

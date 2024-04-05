@@ -347,6 +347,7 @@ void MulticopterPositionControl::Run()
 	vehicle_local_position_s vehicle_local_position;
 
 	if (_local_pos_sub.update(&vehicle_local_position)) {
+
 		const float dt =
 			math::constrain(((vehicle_local_position.timestamp_sample - _time_stamp_last_loop) * 1e-6f), 0.002f, 0.04f);
 		_time_stamp_last_loop = vehicle_local_position.timestamp_sample;
@@ -355,6 +356,7 @@ void MulticopterPositionControl::Run()
 		setDt(dt);
 
 		if (_vehicle_control_mode_sub.updated()) {
+
 			const bool previous_position_control_enabled = _vehicle_control_mode.flag_multicopter_position_control_enabled;
 
 			if (_vehicle_control_mode_sub.update(&_vehicle_control_mode)) {
@@ -371,6 +373,7 @@ void MulticopterPositionControl::Run()
 		_vehicle_land_detected_sub.update(&_vehicle_land_detected);
 
 		if (_param_mpc_use_hte.get()) {
+
 			hover_thrust_estimate_s hte;
 
 			if (_hover_thrust_estimate_sub.update(&hte)) {
@@ -385,14 +388,18 @@ void MulticopterPositionControl::Run()
 		// if a goto setpoint available this publishes a trajectory setpoint to go there
 		if (_goto_control.checkForSetpoint(vehicle_local_position.timestamp_sample,
 						   _vehicle_control_mode.flag_multicopter_position_control_enabled)) {
+
 			_goto_control.update(dt, states.position, states.yaw);
 		}
+
+
 
 		_trajectory_setpoint_sub.update(&_setpoint);
 
 		adjustSetpointForEKFResets(vehicle_local_position, _setpoint);
 
 		if (_vehicle_control_mode.flag_multicopter_position_control_enabled) {
+
 			// set failsafe setpoint if there hasn't been a new
 			// trajectory setpoint since position control started
 			if ((_setpoint.timestamp < _time_position_control_enabled)
@@ -404,6 +411,7 @@ void MulticopterPositionControl::Run()
 
 		if (_vehicle_control_mode.flag_multicopter_position_control_enabled
 		    && (_setpoint.timestamp >= _time_position_control_enabled)) {
+
 
 			// update vehicle constraints and handle smooth takeoff
 			_vehicle_constraints_sub.update(&_vehicle_constraints);
@@ -687,7 +695,21 @@ int MulticopterPositionControl::task_spawn(int argc, char *argv[])
 
 int MulticopterPositionControl::custom_command(int argc, char *argv[])
 {
-	return print_usage("unknown command");
+	if (!strcmp(argv[0],"test1")){
+
+		// Create a new goto setpoint message object
+
+		return 0;
+
+
+
+	}
+	else{
+		print_usage("Unknown command");
+		return 1;
+
+	}
+
 }
 
 int MulticopterPositionControl::print_usage(const char *reason)

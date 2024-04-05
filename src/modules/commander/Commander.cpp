@@ -73,7 +73,7 @@
 
 #include <uORB/topics/mavlink_log.h>
 #include <uORB/topics/tune_control.h>
-#include <commander/IoT-code/MovementCommander/MovementCommander.hpp>
+
 
 
 
@@ -244,10 +244,7 @@ int Commander::custom_command(int argc, char *argv[])
 
 
 
-	if(!strcmp(argv[0], "Movingtest")){
-		MovementCommander movecommander;
-		movecommander.Movingtest();
-	}
+
 
 	if (!strcmp(argv[0], "calibrate")) {
 		if (argc > 1) {
