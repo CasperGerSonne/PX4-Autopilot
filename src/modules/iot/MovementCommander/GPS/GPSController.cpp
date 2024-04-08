@@ -3,21 +3,16 @@
 
 GPSController::GPSController() {
 
-    //GPSController::gps_sub = orb_subscribe(ORB_ID(sensor_gps));
-    //orb_set_interval(gps_sub, 5000); // callback interval
+    double* x = new double;
+    double* y = new double;
+    double* z = new double;
 
-    // get starting location
-    //double* x = new double;
-    //double* y = new double;
-    //double* z = new double;
-    //if (!getposition(x,y,z,1000)){
-    //    PX4_ERR("Waypoint not created bcause of poll timeoutn");
-    //};
+    if (!getposition(x,y,z,1000)){
+        PX4_ERR("Waypoint not created bcause of poll timeoutn");
+    }
 
-    //createWaypoint(latitudeToMeters(*x),longitudeToMeters(*y) ,-*z);
-//
-    //gps_fds[0].fd = gps_sub;
-    //gps_fds[0].events = POLLIN;
+    createWaypoint(latitudeToMeters(*x),longitudeToMeters(*y) ,-*z);
+
 }
 
 GPSController::~GPSController() {
@@ -74,27 +69,7 @@ bool GPSController::getposition(double *latitude,double *longitude,double *altit
 
 }
 
-//double* GPSController::getDistancesFromStartOrWaypoint(bool Start){
-//    double pos_lat;double pos_long;double pos_alt;
-//    if(Start){
-//        pos_lat = * start_latitude ;pos_long = *start_longitude ;pos_alt = * start_altitude;
-//    }else{
-//        pos_lat = * waypoint_latitude ;pos_long = *waypoint_longitude ;pos_alt = * waypoint_altitude;
-//    }
-//
-//    double current_latitude,current_longitude, current_altitude;
-//
-//    getposition(&current_latitude,&current_longitude,&current_altitude,2000);
-//
-//    double* distances = new double[3];
-//    // Assign values to the array
-//    distances[0] = (current_latitude - pos_lat) * 111111;
-//    distances[1] = (current_longitude - pos_long) * (M_PI / 180) * 6371000 * cos(current_latitude * (M_PI / 180));
-//    distances[2] = current_altitude - pos_alt;
-//    // Return pointer to the array
-//    return distances;
-//
-//}
+
 
 double GPSController::metersToLongitude(double meters) {
     // Calculate the circumference of the Earth at the given latitude

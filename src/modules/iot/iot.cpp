@@ -144,33 +144,8 @@ void iot::run()
 	orb_advert_t goto_setpoint_pub = orb_advertise(ORB_ID(goto_setpoint), &_goto_point);
 
 
-	GPScontroller.generateExampleWaypoints();
-
-	for(int i = 0;i < GPScontroller.waypointCount; i++){
-		printf("Point %d: \n",i);
-		printf("X: %f",GPScontroller.WaypointsX[i]);
-		printf("Y: %f",GPScontroller.WaypointsY[i]);
-		printf("Z: %f \n",GPScontroller.WaypointsZ[i]);
-
-	}
-
 	while (!should_exit()) {
-		for (int i = 0; i< GPScontroller.waypointCount;i++){
-			printf("New point\n");
-			double newx = GPScontroller.WaypointsX[i];
-			double newy = GPScontroller.WaypointsY[i];
-			double newz = GPScontroller.WaypointsZ[i];
 
-			for(int j=0;j<10;j++){
-				printf("update\n");
-				updatePoint(newx,newy,newz );
-
-				orb_publish(ORB_ID(goto_setpoint),goto_setpoint_pub,&_goto_point);
-				usleep(200000);
-			}
-
-		}
-			usleep(200000);
 
 	}
 	sleep(10);

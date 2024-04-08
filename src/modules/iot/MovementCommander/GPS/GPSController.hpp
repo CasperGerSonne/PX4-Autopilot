@@ -17,28 +17,31 @@ private:
 
 
 
-
-    double* getDistancesFromStartOrWaypoint(bool Start);
-
-
-public:
-
     double* WaypointsX = new double[10];
     double* WaypointsY = new double[10];
     double* WaypointsZ = new double[10];
 
-    GPSController();
-    ~GPSController();
     int maxwaypoints = 10;
     int waypointCount = 0;
+
+
+public:
+
+
+
+    GPSController();
+    ~GPSController();
+
 
     bool getposition(double *latitude, double *longitude, double *altitude, int poll_T_ms);
     double* getDistances();
     int createWaypoint(double  x,double  y,double z);
+
     double metersToLongitude(double meters);
     double metersToLatitude(double meters);
     double longitudeToMeters(double longitude);
     double latitudeToMeters(double latitude);
+
     void generateExampleWaypoints();
 };
 
