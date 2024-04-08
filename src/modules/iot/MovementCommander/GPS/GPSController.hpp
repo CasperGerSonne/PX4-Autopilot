@@ -22,14 +22,14 @@ private:
 
 
 public:
-
-    double* WaypointsX = new double[10];
-    double* WaypointsY = new double[10];
-    double* WaypointsZ = new double[10];
+    int maxwaypoints = 10;
+    double* WaypointsX = new double[maxwaypoints];
+    double* WaypointsY = new double[maxwaypoints];
+    double* WaypointsZ = new double[maxwaypoints];
 
     GPSController();
     ~GPSController();
-    int maxwaypoints = 10;
+
     int waypointCount = 0;
 
     bool getposition(double *latitude, double *longitude, double *altitude, int poll_T_ms);
