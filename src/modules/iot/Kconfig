@@ -1,0 +1,6 @@
+menuconfig MODULES_IOT
+	bool "iot"
+	default n
+	---help---
+		Enable support for iot
+

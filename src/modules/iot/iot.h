@@ -37,24 +37,27 @@
 #include <px4_platform_common/module_params.h>
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/parameter_update.h>
+#include <uORB/topics/goto_setpoint.h>
+#include <uORB/topics/uORBTopics.hpp>
+#include <uORB/topics/goto_setpoint.h>
+#include <uORB/topics/vehicle_command.h>
+#include <uORB/topics/vehicle_status.h>
+#include <uORB/Publication.hpp>
+#include "MovementCommander/GPS/GPSController.hpp"
+
 
 using namespace time_literals;
 
-extern "C" __EXPORT int template_module_main(int argc, char *argv[]);
 
-
-class TemplateModule : public ModuleBase<TemplateModule>, public ModuleParams
+class iot : public ModuleBase<iot>, public ModuleParams
 {
 public:
-	TemplateModule(int example_param, bool example_flag);
+	iot();
 
-	virtual ~TemplateModule() = default;
+	virtual ~iot() = default;
 
 	/** @see ModuleBase */
 	static int task_spawn(int argc, char *argv[]);
-
-	/** @see ModuleBase */
-	static TemplateModule *instantiate(int argc, char *argv[]);
 
 	/** @see ModuleBase */
 	static int custom_command(int argc, char *argv[]);
@@ -68,23 +71,52 @@ public:
 	/** @see ModuleBase::print_status() */
 	int print_status() override;
 
+	static iot *instantiate(int argc, char *argv[]);
+
 private:
 
-	/**
-	 * Check for parameter changes and update them if needed.
-	 * @param parameter_update_sub uorb subscription to parameter_update
-	 * @param force for a parameter update
-	 */
-	void parameters_update(bool force = false);
+	goto_setpoint_s _goto_point{};
+	GPSController GPScontroller;
+	void initPoint();
+	void updatePoint(float x,float y,float z);
 
 
-	DEFINE_PARAMETERS(
-		(ParamInt<px4::params::SYS_AUTOSTART>) _param_sys_autostart,   /**< example parameter */
-		(ParamInt<px4::params::SYS_AUTOCONFIG>) _param_sys_autoconfig  /**< another parameter */
-	)
 
-	// Subscriptions
-	uORB::Subscription<Interval> _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 };
+//globals
+
+
+
+static bool send_vehicle_command(const uint32_t cmd, const float param1 = NAN, const float param2 = NAN,
+				 const float param3 = NAN,  const float param4 = NAN, const double param5 = static_cast<double>(NAN),
+				 const double param6 = static_cast<double>(NAN), const float param7 = NAN)
+{
+	vehicle_command_s vcmd{};
+	vcmd.command = cmd;
+	vcmd.param1 = param1;
+	vcmd.param2 = param2;
+	vcmd.param3 = param3;
+	vcmd.param4 = param4;
+	vcmd.param5 = param5;
+	vcmd.param6 = param6;
+	vcmd.param7 = param7;
+
+	uORB::SubscriptionData<vehicle_status_s> vehicle_status_sub{ORB_ID(vehicle_status)};
+	vcmd.source_system = vehicle_status_sub.get().system_id;
+	vcmd.target_system = vehicle_status_sub.get().system_id;
+	vcmd.source_component = vehicle_status_sub.get().component_id;
+	vcmd.target_component = vehicle_status_sub.get().component_id;
+
+	uORB::Publication<vehicle_command_s> vcmd_pub{ORB_ID(vehicle_command)};
+	vcmd.timestamp = hrt_absolute_time();
+	return vcmd_pub.publish(vcmd);
+}
+
+
+
+
+
+
+
 
