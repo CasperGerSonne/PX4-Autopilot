@@ -3,15 +3,16 @@
 
 GPSController::GPSController() {
 
-    double* x = new double;
-    double* y = new double;
-    double* z = new double;
-
-    if (!getposition(x,y,z,1000)){
-        PX4_ERR("Waypoint not created bcause of poll timeoutn");
-    }
-
-    createWaypoint(latitudeToMeters(*x),longitudeToMeters(*y) ,-*z);
+    //double* x = new double;
+    //double* y = new double;
+    //double* z = new double;
+//
+    //if (!getposition(x,y,z)){
+    //    PX4_ERR("Waypoint not created bcause of poll timeoutn");
+    //}
+//
+//
+    //createWaypoint(latitudeToMeters(*x),longitudeToMeters(*y) ,-*z);
 
 }
 
@@ -22,7 +23,7 @@ GPSController::~GPSController() {
 
 void GPSController::generateExampleWaypoints(){
     for(int i=waypointCount; i< maxwaypoints; i++){
-        createWaypoint(WaypointsX[0] + cos(i),WaypointsX[1] + sin(i),-i);
+        createWaypoint(-i,0,0);
     }
 }
 
@@ -35,40 +36,56 @@ int GPSController::createWaypoint(double x,double y,double z){
         return 1;
     }
 
-    WaypointsX[waypointCount] = x;
-    WaypointsY[waypointCount] = y;
-    WaypointsZ[waypointCount] = z;
+    WaypointsX[waypointCount] = x + WaypointsX[0];
+    WaypointsY[waypointCount] = y + WaypointsY[0];
+    WaypointsZ[waypointCount] = z + WaypointsZ[0];
 
     waypointCount += 1;
     return 0;
 }
 
-bool GPSController::getposition(double *latitude,double *longitude,double *altitude,int poll_T_ms){
-    // Set callback interval to 1 second
-    int poll_ret = px4_poll(gps_fds, 1, poll_T_ms);
-
-    if (poll_ret == 0) {
-        PX4_WARN("Timeout: No data received");
-        return 0;
-
-    } else if(poll_ret < 0) {
-        PX4_ERR("Error: poll failed");
-        return 0;
-
+void GPSController::resetWaypoints(){
+    waypointCount = 1;
+    for(int i=1; i< maxwaypoints; i++){
+        createWaypoint(0,0,0);
     }
-
-
-    gps_sub.copy(&gps_s);
-
-
-    *latitude = gps_s.latitude_deg / 1e7; // Convert from 1e7 scale to degrees
-    *longitude = gps_s.longitude_deg / 1e7; // Convert from 1e7 scale to degrees
-    *altitude = gps_s.altitude_msl_m / 1e3;
-
-    return 0;
+    waypointCount = 1;
 
 }
 
+bool GPSController::getposition(double *latitude,double *longitude,double *altitude){
+
+	gps_sub.copy(&gps_s);
+
+    *latitude = gps_s.latitude_deg;
+    *longitude = gps_s.longitude_deg;
+    *altitude = gps_s.altitude_msl_m;
+
+    return true;
+
+}
+
+double* GPSController::getDistances(){
+    double* distances = new double[waypointCount-1];
+    if (waypointCount > 1) {
+        double firstX = WaypointsX[0];
+        double firstY = WaypointsY[0];
+        double firstZ = WaypointsZ[0];
+
+        for (int i = 1; i < waypointCount; ++i) {
+            double dx = WaypointsX[i] - firstX;
+            double dy = WaypointsY[i] - firstY;
+            double dz = WaypointsZ[i] - firstZ;
+
+            // Calculate distance using Euclidean distance formula
+            double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+            distances[i-1] = distance;
+        }
+    }else{
+        PX4_ERR("No waypoints created");
+    }
+    return distances;
+}
 
 
 double GPSController::metersToLongitude(double meters) {

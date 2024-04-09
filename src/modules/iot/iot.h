@@ -44,6 +44,7 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/Publication.hpp>
 #include "MovementCommander/GPS/GPSController.hpp"
+#include <modules/commander/Commander.hpp>
 
 
 using namespace time_literals;
@@ -76,14 +77,12 @@ public:
 private:
 
 	goto_setpoint_s _goto_point{};
-	GPSController GPScontroller;
+	void publishPoint();
 	void initPoint();
 	void updatePoint(float x,float y,float z);
 
-
-
-
 };
+GPSController GPScontroller = *new GPSController();
 //globals
 
 

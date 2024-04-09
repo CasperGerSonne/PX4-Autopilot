@@ -13,19 +13,17 @@ private:
     uORB::Subscription gps_sub {ORB_ID(sensor_gps)};
 
     struct sensor_gps_s gps_s;
-    px4_pollfd_struct_t gps_fds[1];
-
-
 
     double* WaypointsX = new double[10];
     double* WaypointsY = new double[10];
     double* WaypointsZ = new double[10];
 
     int maxwaypoints = 10;
-    int waypointCount = 0;
+
 
 
 public:
+    int waypointCount = 0;
 
 
 
@@ -33,7 +31,7 @@ public:
     ~GPSController();
 
 
-    bool getposition(double *latitude, double *longitude, double *altitude, int poll_T_ms);
+    bool getposition(double *latitude, double *longitude, double *altitude);
     double* getDistances();
     int createWaypoint(double  x,double  y,double z);
 
@@ -43,6 +41,7 @@ public:
     double latitudeToMeters(double latitude);
 
     void generateExampleWaypoints();
+    void resetWaypoints();
 };
 
 #endif /* GPS_CONTROLLER_HPP */

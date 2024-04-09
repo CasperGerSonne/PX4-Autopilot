@@ -62,8 +62,9 @@ iot *iot::instantiate(int argc, char *argv[])
 {
 
 	iot *instance = new iot();
-	instance->GPScontroller = *new GPSController();
+
 	instance->initPoint();
+	printf("Z coordinate: %f",static_cast<double>(instance->_goto_point.position[2]));
 	return instance;
 }
 
@@ -85,9 +86,14 @@ int iot::custom_command(int argc, char *argv[])
 
 	// additional custom commands can be handled like this:
 
-	else if (!strcmp(argv[0], "activate")){
+	else if (!strcmp(argv[0], "setpoints")){
+		GPScontroller.generateExampleWaypoints();
+		return 0;
 
-
+	}
+	else if (!strcmp(argv[0], "reset")){
+		GPScontroller.resetWaypoints();
+		return 0;
 
 	}
 	return print_usage("unknown command");
@@ -114,10 +120,10 @@ int iot::task_spawn(int argc, char *argv[])
 void iot::initPoint(){
 	_goto_point.position[0] = 0;
 	_goto_point.position[1] = 0;
-	_goto_point.position[2] = -10;
-	_goto_point.heading = 0;
-	_goto_point.max_horizontal_speed = 5;
-	_goto_point.max_vertical_speed = 5;
+	_goto_point.position[2] = -2.5;
+	_goto_point.heading = 90*M_DEG_TO_RAD;
+	_goto_point.max_horizontal_speed = 1;
+	_goto_point.max_vertical_speed = 1;
 	_goto_point.max_heading_rate = 2;
 	_goto_point.flag_control_heading = true;
 	_goto_point.flag_set_max_horizontal_speed = true;
@@ -130,24 +136,52 @@ void iot::updatePoint(float x, float y , float z ){
 	if (z>0){
 		PX4_WARN("z greater than 0 is underground");
 	}else{
-	_goto_point.timestamp = hrt_absolute_time();
+
 	_goto_point.position[0] = x;
 	_goto_point.position[1] = y;
 	_goto_point.position[2] = z;
+
 	}
+}
+
+void iot::publishPoint(){
+	orb_advert_t goto_setpoint_pub = orb_advertise(ORB_ID(goto_setpoint), &_goto_point);
+	_goto_point.timestamp = hrt_absolute_time();
+	orb_publish(ORB_ID(goto_setpoint), goto_setpoint_pub, &_goto_point);
 }
 
 
 void iot::run()
 {
+	const char *takeoff = "takeoff"; // Define takeoff as const char*
 
-	orb_advert_t goto_setpoint_pub = orb_advertise(ORB_ID(goto_setpoint), &_goto_point);
+	// Convert const char* to char*
+	char* takeoffPtr = const_cast<char*>(takeoff);
 
+	// Pass the address of takeoffPtr to custom_command
+	Commander::custom_command(1, &takeoffPtr);
+	sleep(4);
 
 	while (!should_exit()) {
+		if (GPScontroller.waypointCount > 1){
+			double* distances = GPScontroller.getDistances();
+			double furthest = 0;
+			for (int i = 0;i < GPScontroller.waypointCount; i++){
+				furthest = std::max(furthest,distances[i]);
+			}
+			if (furthest > 5){
+				updatePoint(0,furthest/2,-1.5);
+			}else{
+				updatePoint(0,0,-1.5);
+			}
+		}else{updatePoint(0,0,0);}
 
+
+		publishPoint();
+		usleep(200000);
 
 	}
+
 	sleep(10);
 	send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
 }
