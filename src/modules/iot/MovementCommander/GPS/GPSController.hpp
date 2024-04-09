@@ -5,7 +5,7 @@
 #include <px4_platform_common/px4_config.h>
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/uORB.h>
-#include <tuple>
+
 
 class GPSController {
 private:

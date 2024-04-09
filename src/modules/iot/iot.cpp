@@ -96,6 +96,23 @@ int iot::custom_command(int argc, char *argv[])
 		return 0;
 
 	}
+	else if (!strcmp(argv[0], "rxtest")){
+		UartCommander uartCom = *new UartCommander();
+		uartCom.Uart_Rxtest(1);
+	}
+	else if (!strcmp(argv[0], "takeoff")){
+		const char *takeoff = "takeoff";
+
+
+		char* takeoffPtr = const_cast<char*>(takeoff);
+
+
+		Commander::custom_command(1, &takeoffPtr);
+
+		return 0;
+
+	}
+
 	return print_usage("unknown command");
 }
 
@@ -152,38 +169,43 @@ void iot::publishPoint(){
 
 
 void iot::run()
-{
-	const char *takeoff = "takeoff"; // Define takeoff as const char*
-
-	// Convert const char* to char*
-	char* takeoffPtr = const_cast<char*>(takeoff);
-
-	// Pass the address of takeoffPtr to custom_command
-	Commander::custom_command(1, &takeoffPtr);
-	sleep(4);
-
+{//
+	//const char *takeoff = "takeoff";
+//
+//
+	//char* takeoffPtr = const_cast<char*>(takeoff);
+//
+//
+	//Commander::custom_command(1, &takeoffPtr);
+	//sleep(4);
+//
+	//while (!should_exit()) {
+	//	if (GPScontroller.waypointCount > 1){
+	//		double* distances = GPScontroller.getDistances();
+	//		double furthest = 0;
+	//		for (int i = 0;i < GPScontroller.waypointCount; i++){
+	//			furthest = mymax(furthest,distances[i]);
+	//		}
+	//		if (furthest > 5){
+	//			updatePoint(0,furthest/2,-1.5);
+	//		}else{
+	//			updatePoint(0,0,-1.5);
+	//		}
+	//	}else{updatePoint(0,0,0);}
+//
+//
+	//	publishPoint();
+	//	usleep(200000);
+//
+	//}
+//
+	//sleep(10);
+	//send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
 	while (!should_exit()) {
-		if (GPScontroller.waypointCount > 1){
-			double* distances = GPScontroller.getDistances();
-			double furthest = 0;
-			for (int i = 0;i < GPScontroller.waypointCount; i++){
-				furthest = std::max(furthest,distances[i]);
-			}
-			if (furthest > 5){
-				updatePoint(0,furthest/2,-1.5);
-			}else{
-				updatePoint(0,0,-1.5);
-			}
-		}else{updatePoint(0,0,0);}
 
-
-		publishPoint();
-		usleep(200000);
-
+		sleep(1);
 	}
 
-	sleep(10);
-	send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
 }
 
 
