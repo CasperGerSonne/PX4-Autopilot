@@ -81,7 +81,7 @@ private:
 	goto_setpoint_s _goto_point{};
 	void publishPoint();
 	void initPoint();
-	void updatePoint(float x,float y,float z);
+	void changePoint(float x,float y,float z);
 
 };
 GPSController GPScontroller = *new GPSController();

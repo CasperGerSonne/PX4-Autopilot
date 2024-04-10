@@ -50,7 +50,8 @@ int UartCommander::Uart_Rxtest(int expectedn){
 
 
             // Read from the serial port
-            bytes_read1 = serial_port._read_port(*data1,20);
+
+            bytes_read1 = serial_port._read_port(*data1,1,200);
             if(bytes_read1+bytes_read2 < expectedn){
                 bytes_read2 = bytes_read1;
                 data2 = data1;

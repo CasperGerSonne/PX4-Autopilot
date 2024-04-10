@@ -100,7 +100,7 @@ initialize_defaults()
 	if ( result != 0 )
 	{
 		printf("\n mutex init failed\n");
-		
+
 	}
 }
 
@@ -125,7 +125,7 @@ start()
 	if (fd == -1)
 	{
 		printf("failure, could not open port.\n");
-		
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -139,19 +139,19 @@ start()
 	if (!success)
 	{
 		printf("failure, could not configure port.\n");
-		
+
 	}
 	if (fd <= 0)
 	{
 		printf("Connection attempt to port %s with %d baud, 8N1 failed, exiting.\n", uart_name, baudrate);
-		
+
 	}
 
 	// --------------------------------------------------------------------------
 	//   CONNECTED!
 	// --------------------------------------------------------------------------
 	printf("Connected to %s with %d baud, 8 data bits, no parity, 1 stop bit (8N1)\n", uart_name, baudrate);
-	
+
 
 	is_open = true;
 
@@ -275,11 +275,11 @@ _setup_port(int baud, int data_bits, int stop_bits, bool parity, bool hardware_c
 	// One input byte is enough to return from read()
 	// Inter-character timer off
 	config.c_cc[VMIN]  = 1;
-	config.c_cc[VTIME] = 232; // was 0
+	config.c_cc[VTIME] = 20; // was 0
 
 	// Get the current options for the port
-	////struct termios options;
-	////tcgetattr(fd, &options);
+	struct termios options;
+	tcgetattr(fd, &options);
 
 	// Apply baudrate
 	switch (baud)
@@ -366,16 +366,29 @@ _setup_port(int baud, int data_bits, int stop_bits, bool parity, bool hardware_c
 // ------------------------------------------------------------------------------
 int
 Serial_Port::
-_read_port(uint8_t &cp,size_t nbytes)
+_read_port(uint8_t &cp,size_t nbytes, int poll_time)
 {
+	struct pollfd poll_fds[1];
+        poll_fds[0].fd = fd;
+        poll_fds[0].events = POLLIN;
 
+        // Wait for data to be available on UART using poll with timeout
+        int ret = poll(poll_fds, 1, poll_time);
+
+	if (ret == -1) {
+		perror("Error: Poll failed");
+		return -1;
+	} else if (ret == 0) {
+		printf("Timeout: No data available within %d milliseconds\n", poll_time);
+		return 0; // Timeout occurred
+	}
 	// Lock
-	pthread_mutex_lock(&lock);
+		pthread_mutex_lock(&lock);
 
-	int result = read(fd, &cp, nbytes);
+		int result = read(fd, &cp, nbytes);
 
-	// Unlock
-	pthread_mutex_unlock(&lock);
+		// Unlock
+		pthread_mutex_unlock(&lock);
 
 	return result;
 }

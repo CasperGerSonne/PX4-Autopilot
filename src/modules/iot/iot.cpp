@@ -148,7 +148,7 @@ void iot::initPoint(){
 	_goto_point.flag_set_max_heading_rate = true;
 }
 
-void iot::updatePoint(float x, float y , float z ){
+void iot::changePoint(float x, float y , float z ){
 
 	if (z>0){
 		PX4_WARN("z greater than 0 is underground");
@@ -169,42 +169,52 @@ void iot::publishPoint(){
 
 
 void iot::run()
-{//
+{
 	//const char *takeoff = "takeoff";
-//
-//
 	//char* takeoffPtr = const_cast<char*>(takeoff);
-//
-//
 	//Commander::custom_command(1, &takeoffPtr);
-	//sleep(4);
-//
+	//sleep(7);
+	//Serial_Port serial_port("/dev/ttyS1", 115200);
+	//serial_port.start();
+	//int bytes_read;
+	//uint8_t* data = new uint8_t[6];
+	//uint8_t distances[6];
 	//while (!should_exit()) {
-	//	if (GPScontroller.waypointCount > 1){
-	//		double* distances = GPScontroller.getDistances();
-	//		double furthest = 0;
-	//		for (int i = 0;i < GPScontroller.waypointCount; i++){
+	//	bytes_read = serial_port._read_port(*data,1,200);
+	//	printf("Bytes recieved %d\n",bytes_read);
+	//	if (bytes_read >= 1){
+//
+	//		for (int i = 0; i < bytes_read; ++i) {
+	//			distances[i] = data[i];
+	//			printf("Distance %d is %u\n",i,distances[i]);
+	//		}
+//
+//
+	//		uint8_t furthest = 0;
+	//		for (int i = 0;i < 6; i++){
 	//			furthest = mymax(furthest,distances[i]);
 	//		}
 	//		if (furthest > 5){
-	//			updatePoint(0,furthest/2,-1.5);
+	//			changePoint(0,furthest/2,-1.5);
 	//		}else{
-	//			updatePoint(0,0,-1.5);
+	//			changePoint(0,0,-1.5);
 	//		}
-	//	}else{updatePoint(0,0,0);}
+	//	}else{changePoint(0,0,-1.5);}
+//
+//
+	//	printf("X: %f  Y: %f  Z: %f\n",(double)_goto_point.position[0],(double)_goto_point.position[1],(double)_goto_point.position[2]);
 //
 //
 	//	publishPoint();
-	//	usleep(200000);
+//
 //
 	//}
-//
-	//sleep(10);
-	//send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
 	while (!should_exit()) {
-
 		sleep(1);
 	}
+	sleep(10);
+
+
 
 }
 

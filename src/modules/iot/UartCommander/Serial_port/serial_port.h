@@ -62,7 +62,7 @@
 #include <pthread.h> // This uses POSIX Threads
 #include <signal.h>
 #include <cstdint>
-
+#include <poll.h>
 
 
 // ------------------------------------------------------------------------------
@@ -115,10 +115,10 @@ public:
 	void start();
 	void stop();
 
-	int _read_port(uint8_t &cp,size_t nbytes);
+	int _read_port(uint8_t &cp,size_t nbytes,int poll_time);
 	int _write_port(char *buf, unsigned len);
 	bool _setup_port(int baud, int data_bits, int stop_bits, bool parity, bool hardware_control);
-	
+
 
 private:
 
@@ -132,11 +132,6 @@ private:
 	int  baudrate;
 	bool is_open;
 	int  _open_port(const char* port);
-
-	
-	
-	
-
 };
 
 
