@@ -100,18 +100,7 @@ int iot::custom_command(int argc, char *argv[])
 		UartCommander uartCom = *new UartCommander();
 		uartCom.Uart_Rxtest(1);
 	}
-	else if (!strcmp(argv[0], "takeoff")){
-		const char *takeoff = "takeoff";
 
-
-		char* takeoffPtr = const_cast<char*>(takeoff);
-
-
-		Commander::custom_command(1, &takeoffPtr);
-
-		return 0;
-
-	}
 
 	return print_usage("unknown command");
 }
