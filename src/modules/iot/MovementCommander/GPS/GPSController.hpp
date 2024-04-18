@@ -42,6 +42,7 @@ public:
 
     void generateExampleWaypoints();
     void resetWaypoints();
+    double* getstart();
 };
 
 #endif /* GPS_CONTROLLER_HPP */

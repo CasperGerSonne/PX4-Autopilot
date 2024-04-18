@@ -3,16 +3,16 @@
 
 GPSController::GPSController() {
 
-    //double* x = new double;
-    //double* y = new double;
-    //double* z = new double;
-//
-    //if (!getposition(x,y,z)){
-    //    PX4_ERR("Waypoint not created bcause of poll timeoutn");
-    //}
-//
-//
-    //createWaypoint(latitudeToMeters(*x),longitudeToMeters(*y) ,-*z);
+    double* x = new double;
+    double* y = new double;
+    double* z = new double;
+
+    if (!getposition(x,y,z)){
+        PX4_ERR("Waypoint not created bcause of poll timeoutn");
+    }
+
+
+    createWaypoint(latitudeToMeters(*x),longitudeToMeters(*y) ,-*z);
 
 }
 
@@ -20,6 +20,15 @@ GPSController::~GPSController() {
     // Destructor implementation
 }
 
+double* GPSController::getstart(){
+    double* res = new double[3];
+    res[0] = WaypointsX[0];
+    res[1] = WaypointsX[1];
+    res[2] = WaypointsX[2];
+
+
+    return res;
+}
 
 void GPSController::generateExampleWaypoints(){
     for(int i=waypointCount; i< maxwaypoints; i++){
