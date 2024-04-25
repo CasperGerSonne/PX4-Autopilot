@@ -39,7 +39,7 @@
 #include "iot.h"
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/sensor_combined.h>
-
+#include <uORB/topics/vehicle_local_position_setpoint.h>
 
 
 // Globals:
@@ -86,19 +86,326 @@ int iot::custom_command(int argc, char *argv[])
 
 	// additional custom commands can be handled like this:
 
-	else if (!strcmp(argv[0], "setpoints")){
-		GPScontroller.generateExampleWaypoints();
-		return 0;
 
-	}
-	else if (!strcmp(argv[0], "reset")){
-		GPScontroller.resetWaypoints();
-		return 0;
 
-	}
-	else if (!strcmp(argv[0], "rxtest")){
+	else if (!strcmp(argv[0], "rxtest1")){
+
+		int expected = 11;
+		if (argc>1){
+			expected = atoi(argv[1]);
+		}
 		UartCommander uartCom = *new UartCommander();
-		uartCom.Uart_Rxtest(1);
+		uartCom.Uart_Rxtest1(expected);
+	}
+	else if (!strcmp(argv[0], "rxtest2")){
+		int expected = 11;
+		if (argc>1){
+			expected = atoi(argv[1]);
+		}
+		printf("%d\n",expected);
+		UartCommander uartCom = *new UartCommander();
+		uartCom.Uart_Rxtest2(expected);
+	}
+	else if (!strcmp(argv[0], "goto")){
+
+
+
+
+		goto_setpoint_s goto_setpoint_s1{};
+		goto_setpoint_s goto_setpoint_s2{};
+		orb_advert_t goto_pub1 = orb_advertise(ORB_ID(goto_setpoint), &goto_setpoint_s1);
+		orb_advert_t goto_pub2 = orb_advertise(ORB_ID(goto_setpoint), &goto_setpoint_s2);
+		goto_setpoint_s1.position[0] = 0;
+		goto_setpoint_s1.position[1] = 0;
+		goto_setpoint_s1.position[2] = 0;
+		goto_setpoint_s1.heading = 0;
+		goto_setpoint_s1.max_horizontal_speed = 1;
+		goto_setpoint_s1.max_vertical_speed = 1;
+		goto_setpoint_s1.max_heading_rate = 0;
+		goto_setpoint_s1.flag_control_heading = true;
+		goto_setpoint_s1.flag_set_max_horizontal_speed = true;
+		goto_setpoint_s1.flag_set_max_vertical_speed = true;
+		goto_setpoint_s1.flag_set_max_heading_rate = true;
+
+		goto_setpoint_s2.position[0] = 0;
+		goto_setpoint_s2.position[1] = 0;
+		goto_setpoint_s2.position[2] = -2;
+		goto_setpoint_s2.heading = 0;
+		goto_setpoint_s2.max_horizontal_speed = 1;
+		goto_setpoint_s2.max_vertical_speed = 1;
+		goto_setpoint_s2.max_heading_rate = 0;
+		goto_setpoint_s2.flag_control_heading = true;
+		goto_setpoint_s2.flag_set_max_horizontal_speed = true;
+		goto_setpoint_s2.flag_set_max_vertical_speed = true;
+		goto_setpoint_s2.flag_set_max_heading_rate = true;
+
+		for (int i = 1; i< argc; i++){
+			if(!strcmp(argv[i], "-x")){
+				goto_setpoint_s2.position[0] = atoi(argv[i+1]);
+			}
+			if(!strcmp(argv[i], "-y")){
+				goto_setpoint_s2.position[1] = atoi(argv[i+1]);
+			}
+			if(!strcmp(argv[i], "-z")){
+				goto_setpoint_s2.position[2] = atoi(argv[i+1]);
+			}
+
+		}
+		printf("Takeoff");
+		const char *takeoff = "takeoff";
+		char* takeoffPtr = const_cast<char*>(takeoff);
+		Commander::custom_command(1, &takeoffPtr);
+
+		sleep(7);
+		printf("first send move\n");
+		goto_setpoint_s2.timestamp = hrt_absolute_time();
+		orb_publish(ORB_ID(goto_setpoint), goto_pub2 , &goto_setpoint_s2);
+
+		for(int i = 0; i<50;i++){
+			goto_setpoint_s1.timestamp = hrt_absolute_time();
+			orb_publish(ORB_ID(goto_setpoint), goto_pub1 , &goto_setpoint_s1);
+			usleep(200000);
+		}
+
+		printf("Return with goto\n");
+		goto_setpoint_s2.timestamp = hrt_absolute_time();
+		goto_setpoint_s2.position[0] = - goto_setpoint_s2.position[0];
+		goto_setpoint_s2.position[1] = - goto_setpoint_s2.position[1] ;
+		goto_setpoint_s2.position[2] = goto_setpoint_s2.position[2] ;
+		orb_publish(ORB_ID(goto_setpoint), goto_pub2 , &goto_setpoint_s2);
+
+		for (int i = 0; i<20;i++){
+			goto_setpoint_s1.timestamp = hrt_absolute_time();
+			orb_publish(ORB_ID(goto_setpoint), goto_pub1 , &goto_setpoint_s1);
+			usleep(200000);
+		}
+
+		sleep(4);
+		printf("Landing");
+		send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
+		return 0;
+	}
+
+	else if (!strcmp(argv[0], "activation")){
+
+		Serial_Port serial_port("/dev/ttyS1", 115200);
+        	serial_port.start();
+
+		GPSController gpsC = *new GPSController();
+
+
+		int bytes_read = 0;
+        	int totbytes = 0;
+		int expectedn = 1;
+
+		float ccDistBase = 0;
+
+		double* waypoint;
+
+		bool isflying = false;
+
+		if (argc>1){
+			expectedn = atoi(argv[1]);
+		}
+
+		uint8_t* data = new uint8_t[expectedn];
+        	uint8_t* buffer = new uint8_t[expectedn];
+
+
+
+
+		while(true){
+			//stay in goto struct point
+
+
+			//wait for 200 or recieve message
+			bytes_read = serial_port._read_port(*buffer,expectedn,200);
+
+			//add to data if having read something
+			if (bytes_read > 0){
+				for (int i = 0; i<  totbytes + bytes_read;i++){
+					data[i+totbytes] = buffer[i];
+				}
+				totbytes += bytes_read;
+				printf("Read message\n");
+			}else{continue;}
+
+
+			if (!(totbytes == expectedn)){
+
+				continue;
+
+			}
+
+			ccDistBase = data[0]; // in dm
+			printf("Got a distance in dm %.f\n", static_cast<double>(ccDistBase));
+			totbytes = 0;
+			if ((ccDistBase <=  10)){
+
+				if (isflying){
+					printf("Is flying landing\n");
+					waypoint = gpsC.createWaypoint(0,0,1.5);
+					send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
+										0.5,
+										vehicle_command_s::SPEED_TYPE_AIRSPEED,
+										NAN,
+										NAN,
+										waypoint[0],
+										waypoint[1],
+										waypoint[2]
+										);
+
+					sleep(2);
+					send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
+					sleep(5);
+					isflying = false;
+					continue;
+				}else{
+					printf("on ground no need to move\n");
+					continue;
+				}
+			}
+			//board is too far away
+			else{
+				if (!isflying){
+					printf("Taking off\n");
+					const char *takeoff = "takeoff";
+					char* takeoffPtr = const_cast<char*>(takeoff);
+					Commander::custom_command(1, &takeoffPtr);
+
+					sleep(5);
+
+					waypoint = gpsC.createWaypoint(-ccDistBase/10,0,1.5);
+					send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
+										0.5,
+										vehicle_command_s::SPEED_TYPE_AIRSPEED,
+										NAN,
+										NAN,
+										waypoint[0],
+										waypoint[1],
+										waypoint[2]
+										);
+					isflying = true;
+					continue;
+				}else{
+					printf("isflying doing movement");
+					waypoint = gpsC.createWaypoint(-ccDistBase/10,0,1.5);
+					send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
+										0.5,
+										vehicle_command_s::SPEED_TYPE_AIRSPEED,
+										NAN,
+										NAN,
+										waypoint[0],
+										waypoint[1],
+										waypoint[2]
+										);
+					continue;
+				}
+			}
+		}
+
+		return 0;
+	}
+
+
+
+
+	else if (!strcmp(argv[0], "repos")){
+
+
+
+
+
+		GPSController gpsC = *new GPSController();
+		double* startpoint = gpsC.getstart();
+
+		float latmeters = 0;
+		float longmeters = 0;
+		float alt = 0;
+
+		for (int i = 1; i< argc; i++){
+			if(!strcmp(argv[i], "-x")){
+				printf("latarg: %s\n",argv[i+1]);
+				latmeters = atoi(argv[i+1]);
+			}
+			if(!strcmp(argv[i], "-y")){
+				printf("lonarg: %s\n",argv[i+1]);
+				longmeters = atoi(argv[i+1]);
+			}
+			if(!strcmp(argv[i], "-z")){
+				printf("altarg: %s\n",argv[i+1]);
+				alt  =  atoi(argv[i+1]);
+			}
+		}
+
+		double* waypoint = gpsC.createWaypoint(latmeters,longmeters,alt);
+		printf("startpoint: lat %lf; lon %lf; alt %lf\n", startpoint[0],startpoint[1],startpoint[2]);
+		printf("coordinate: lat %lf; lon %lf; alt %lf\n", waypoint[0],waypoint[1],waypoint[2]);
+
+		send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
+										0.5,
+										vehicle_command_s::SPEED_TYPE_AIRSPEED,
+										NAN,
+										NAN,
+										waypoint[0],
+										waypoint[1],
+										waypoint[2]
+										);
+		printf("Donne\n");
+
+		return 0;
+	}
+
+
+	else if (!strcmp(argv[0], "GPStest")){
+		// Subscirbe to "sensor_gyro", then set a polling interval of 200ms
+		int gps_sub = orb_subscribe(ORB_ID(sensor_gps));
+		orb_set_interval(gps_sub, 200);
+
+		// Configure a POSIX POLLIN system to sleep the current thread until
+		// data appears on the topic
+		px4_pollfd_struct_t fds_gps;
+		fds_gps.fd = gps_sub;
+		fds_gps.events = POLLIN;
+		hrt_abstime starttime = hrt_absolute_time();
+		 // Loop a specified number of times
+    for(int i = 1; i <= 400; i++)
+    {
+        // Allow the POSIX POLLIN system to poll for data, with 1000ms timeout
+        int poll_ret = px4_poll(&fds_gps, 1, 1000);
+
+        // If px4_poll returns 0, then the poll system timed out! Throw an error.
+        if(poll_ret == 0)
+        {
+            PX4_ERR("Got no data within a second");
+        }
+
+        // If it didn't return 0, we got data!
+        else
+        {
+            // Double check that the data we recieved was in the right format (I think - need to check)
+            if(fds_gps.revents & POLLIN)
+            {
+
+                // Create a sensor_gps_s struct to store the data we recieved
+                struct sensor_gps_s gps;
+
+                // Copy the data over to the struct
+                orb_copy(ORB_ID(sensor_gps), gps_sub, &gps);
+
+
+                // Finally, print the data!
+                printf("%lld |  %+2.6f  |  %+2.6f  |  %+2.2f  \n", hrt_absolute_time()-starttime, (double)gps.latitude_deg, (double)gps.longitude_deg, (double)gps.altitude_msl_m);
+            }
+        }
+    }
+
+    // Tell the user that the application is ending...
+    PX4_INFO("Hovergames gyro exit");
+
+    // Typical C exit :)
+    return 0;
+
 	}
 
 

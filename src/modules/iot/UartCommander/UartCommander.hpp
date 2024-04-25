@@ -14,7 +14,8 @@ class UartCommander {
 public:
     UartCommander(); // Constructor
     ~UartCommander(); // Destructor
-    int Uart_Rxtest(int expected);
+    int Uart_Rxtest1(int expected);
+    int Uart_Rxtest2(int expected);
     int Uart_Txtest();
 
 };

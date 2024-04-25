@@ -379,7 +379,7 @@ _read_port(uint8_t &cp,size_t nbytes, int poll_time)
 		perror("Error: Poll failed");
 		return -1;
 	} else if (ret == 0) {
-		printf("Timeout: No data available within %d milliseconds\n", poll_time);
+		//printf("Timeout: No data available within %d milliseconds\n", poll_time);
 		return 0; // Timeout occurred
 	}
 	// Lock
