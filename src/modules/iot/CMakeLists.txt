@@ -1,4 +1,4 @@
-add_subdirectory(UartCommander)
+
 add_subdirectory(MovementCommander)
 
 px4_add_module(
@@ -9,7 +9,7 @@ px4_add_module(
 		iot.cpp
 	DEPENDS
 	MovementCommander
-	UartCommander
+
 
 	)
 

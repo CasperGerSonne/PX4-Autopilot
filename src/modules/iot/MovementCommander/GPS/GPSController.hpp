@@ -39,7 +39,8 @@ public:
     double longitudeToMeters(double longitude);
     double latitudeToMeters(double latitude);
 
-    void generateExampleWaypoints();
+    int GPStest();
+
 
     double* getstart();
 };

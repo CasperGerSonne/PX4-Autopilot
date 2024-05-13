@@ -45,7 +45,7 @@
 #include <uORB/Publication.hpp>
 #include "MovementCommander/GPS/GPSController.hpp"
 #include <modules/commander/Commander.hpp>
-#include "UartCommander/UartCommander.hpp"
+
 
 
 
@@ -84,8 +84,7 @@ private:
 	void changePoint(float x,float y,float z);
 
 };
-GPSController GPScontroller = *new GPSController();
-//globals
+
 
 
 
@@ -96,30 +95,32 @@ T mymax(T a, T b) {
 }
 
 
-static bool send_vehicle_command(const uint32_t cmd, const float param1 = NAN, const float param2 = NAN,
-				 const float param3 = NAN,  const float param4 = NAN, const double param5 = static_cast<double>(NAN),
-				 const double param6 = static_cast<double>(NAN), const float param7 = NAN)
-{
-	vehicle_command_s vcmd{};
-	vcmd.command = cmd;
-	vcmd.param1 = param1;
-	vcmd.param2 = param2;
-	vcmd.param3 = param3;
-	vcmd.param4 = param4;
-	vcmd.param5 = param5;
-	vcmd.param6 = param6;
-	vcmd.param7 = param7;
+//static bool send_vehicle_command(const uint32_t cmd, const float param1 = NAN, const float param2 = NAN,
+//				 const float param3 = NAN,  const float param4 = NAN, const double param5 = static_cast<double>(NAN),
+//				 const double param6 = static_cast<double>(NAN), const float param7 = NAN)
+//{
+//	vehicle_command_s vcmd{};
+//	vcmd.command = cmd;
+//	vcmd.param1 = param1;
+//	vcmd.param2 = param2;
+//	vcmd.param3 = param3;
+//	vcmd.param4 = param4;
+//	vcmd.param5 = param5;
+//	vcmd.param6 = param6;
+//	vcmd.param7 = param7;
+//
+//	uORB::SubscriptionData<vehicle_status_s> vehicle_status_sub{ORB_ID(vehicle_status)};
+//	vcmd.source_system = vehicle_status_sub.get().system_id;
+//	vcmd.target_system = vehicle_status_sub.get().system_id;
+//	vcmd.source_component = vehicle_status_sub.get().component_id;
+//	vcmd.target_component = vehicle_status_sub.get().component_id;
+//
+//	uORB::Publication<vehicle_command_s> vcmd_pub{ORB_ID(vehicle_command)};
+//	vcmd.timestamp = hrt_absolute_time();
+//	return vcmd_pub.publish(vcmd);
+//}
+//
 
-	uORB::SubscriptionData<vehicle_status_s> vehicle_status_sub{ORB_ID(vehicle_status)};
-	vcmd.source_system = vehicle_status_sub.get().system_id;
-	vcmd.target_system = vehicle_status_sub.get().system_id;
-	vcmd.source_component = vehicle_status_sub.get().component_id;
-	vcmd.target_component = vehicle_status_sub.get().component_id;
-
-	uORB::Publication<vehicle_command_s> vcmd_pub{ORB_ID(vehicle_command)};
-	vcmd.timestamp = hrt_absolute_time();
-	return vcmd_pub.publish(vcmd);
-}
 
 
 

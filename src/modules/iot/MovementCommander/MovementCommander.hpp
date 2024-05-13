@@ -15,8 +15,12 @@ public:
     ~MovementCommander();
 
     int Movingtest();
+    int activation1(int expectedn);
+    int gototest();
+    int repos(float x,float y,float z);
 
 
 };
+
 
 #endif /* GPS_CONTROLLER_HPP */
