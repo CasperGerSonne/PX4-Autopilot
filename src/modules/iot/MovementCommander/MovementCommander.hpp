@@ -16,6 +16,7 @@ public:
 
     int Movingtest();
     int activation1(int expectedn);
+    void repostest();
     int gototest();
     int repos(float x,float y,float z);
 

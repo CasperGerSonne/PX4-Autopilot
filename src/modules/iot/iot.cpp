@@ -161,6 +161,11 @@ int iot::custom_command(int argc, char *argv[])
 		gpscontroller.GPStest();
 
 	}
+	else if (!strcmp(argv[0], "repostest")){
+		MovementCommander movecom = *new MovementCommander();
+		movecom.repostest();
+
+	}
 
 
 	return print_usage("unknown command");

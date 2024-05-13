@@ -129,7 +129,7 @@ int MovementCommander::activation1(int expectedn){
 		//assuming 1d motion and the drone being perfect on line
 		totbytes = 0;
 
-		if (data[2] < -60){
+		if (data[2] > 60){
 
 			if (isflying){
 				printf("Is flying landing\n");
@@ -302,4 +302,34 @@ int MovementCommander::repos(float x, float y,float z){
 		printf("Donne\n");
 
 		return 0;
+}
+
+void MovementCommander::repostest(){
+	const char *takeoff = "takeoff";
+	char* takeoffPtr = const_cast<char*>(takeoff);
+	Commander::custom_command(1, &takeoffPtr);
+
+	sleep(3);
+
+	printf("Move x -3\n");
+	repos(-3,0,0);
+	sleep(5);
+	printf("Move x 3\n");
+	repos(3,0,0);
+	sleep(5);
+	printf("Move y -2\n");
+	repos(0,-2,0);
+	sleep(5);
+	printf("Move y 2\n");
+	repos(0,2,0);
+	sleep(5);
+	printf("Move zå-2\n");
+	repos(0,0,-2);
+	sleep(5);
+	printf("Move z 2\n");
+	repos(0,0,2);
+	sleep(3);
+	send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
+
+
 }
