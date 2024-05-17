@@ -2,21 +2,11 @@
 #include "GPSController.hpp"
 
 GPSController::GPSController() {
-    printf("GPScontroller construct");
 
-    double* x = new double;
-    double* y = new double;
-    double* z = new double;
 
-    if (!getposition(x,y,z)){
+    if (!getposition(&Startpoint[0],&Startpoint[1],&Startpoint[2])){
         PX4_ERR("Waypoint not created bcause of poll timeoutn");
     }
-
-    Startpoint[0] = *x;
-    Startpoint[1] = *y;
-    Startpoint[2] = *z;
-
-
 
 }
 
@@ -30,13 +20,13 @@ double* GPSController::getstart(){
 
 
 
-double* GPSController::createWaypoint(double x,double y,double z){
+double* GPSController::createWaypoint(double dlat,double dlon,double dalt){
 
 
     double* res = new double[3];
-    res[0] = metersToLatitude(x) + Startpoint[0];
-    res[1] = metersToLongitude(y) + Startpoint[1];
-    res[2] = z + Startpoint[2];
+    res[0] = metersToLatitude(dlat) + Startpoint[0];
+    res[1] = metersToLongitude(dlon) + Startpoint[1];
+    res[2] = dalt + Startpoint[2];
 
     return res;
 }
@@ -49,7 +39,7 @@ bool GPSController::getposition(double *latitude,double *longitude,double *altit
 
     *latitude = gps_s.latitude_deg;
     *longitude = gps_s.longitude_deg;
-    *altitude = gps_s.altitude_msl_m;
+    *altitude = gps_s.altitude_ellipsoid_m;
 
     return true;
 
@@ -57,6 +47,7 @@ bool GPSController::getposition(double *latitude,double *longitude,double *altit
 
 double GPSController::metersToLongitude(double meters) {
     // Calculate the circumference of the Earth at the given latitude
+    printf("longitude multiplier %f",cos(Startpoint[0] * (M_PI / 180)));
     return meters / (6371000 * cos(Startpoint[0] * (M_PI / 180)));
 }
 
@@ -106,7 +97,7 @@ int GPSController::GPStest(){
 
 
 					// Finally, print the data!
-					printf("%lld |  %+2.6f  |  %+2.6f  |  %+2.2f  \n", hrt_absolute_time()-starttime, (double)gps.latitude_deg, (double)gps.longitude_deg, (double)gps.altitude_msl_m);
+					printf("%lld |  %+2.6f  |  %+2.6f  |  %+2.2f  \n", hrt_absolute_time()-starttime, (double)gps.latitude_deg, (double)gps.longitude_deg, (double)gps.altitude_ellipsoid_m);
 				}
 			}
 		}
