@@ -1,4 +1,4 @@
-#include <commander/Commander.hpp>
+
 #include "GPSController.hpp"
 
 GPSController::GPSController() {
@@ -8,10 +8,13 @@ GPSController::GPSController() {
         PX4_ERR("Waypoint not created bcause of poll timeoutn");
     }
 
+    currwaypoint = Startpoint;
+
 }
 
 GPSController::~GPSController() {
     // Destructor implementation
+
 }
 
 double* GPSController::getstart(){
@@ -20,13 +23,15 @@ double* GPSController::getstart(){
 
 
 
-double* GPSController::createWaypoint(double dlat,double dlon,double dalt){
+double* GPSController::createRelativeWaypoint(double dlat,double dlon,double dalt){
 
 
     double* res = new double[3];
-    res[0] = metersToLatitude(dlat) + Startpoint[0];
-    res[1] = metersToLongitude(dlon) + Startpoint[1];
-    res[2] = dalt + Startpoint[2];
+    res[0] = metersToLatitude(dlat) + currwaypoint[0];
+    res[1] = metersToLongitude(dlon) + currwaypoint[1];
+    res[2] = dalt + currwaypoint[2];
+
+    currwaypoint = res;
 
     return res;
 }
@@ -45,13 +50,45 @@ bool GPSController::getposition(double *latitude,double *longitude,double *altit
 
 }
 
-double GPSController::metersToLongitude(double meters) {
-    // Calculate the circumference of the Earth at the given latitude
-    printf("longitude multiplier %f",cos(Startpoint[0] * (M_PI / 180)));
-    return meters / (6371000 * cos(Startpoint[0] * (M_PI / 180)));
+
+
+double* GPSController::calculateDistances(double* waypoint, double* basepoint) {
+    // Convert latitudes and longitudes from degrees to radians
+    double waylat_rad = deg2rad(waypoint[0]);
+    double waylon_rad = deg2rad(waypoint[1]);
+    double baselat_rad = deg2rad(basepoint[0]);
+    double baselon_rad = deg2rad(basepoint[1]);
+
+    const double R = 6371000.0;
+
+    // Differences in latitude and longitude
+    double dLat = waylat_rad - baselat_rad;
+    double dLon = waylon_rad - baselon_rad;
+
+    // Calculate differences in meters for latitude and longitude
+    double dNorth = dLat * R;
+    double dEast = dLon * R * cos((baselat_rad));
+
+    // Difference in altitude
+    double dUp = waypoint[2] - basepoint[2];
+    double* res = new double[3];
+    res[0] = dNorth;
+    res[1] = dEast;
+    res[2] = dUp;
+
+    return res;
 }
 
-double GPSController::metersToLatitude(double meters) { return meters / 111111.0; }
+double GPSController::metersToLongitude(double meters) {
+    // Calculate the circumference of the Earth at the given latitude
+
+
+    return meters / (6371000 * cos(Startpoint[0] * (M_PI / 180) ))  * (180 / M_PI);
+}
+
+double GPSController::metersToLatitude(double meters) {
+
+	return meters / 111111.0; }
 
 double GPSController::latitudeToMeters(double latitude) {
     return latitude * 111111.0;
@@ -59,7 +96,7 @@ double GPSController::latitudeToMeters(double latitude) {
 
 double GPSController::longitudeToMeters(double longitude) {
     double latitude = Startpoint[0] * (M_PI / 180); // Convert latitude to radians
-    return longitude * (6371000 * cos(latitude) * (M_PI / 180));
+    return longitude * (6371000 * cos(latitude * (M_PI / 180)));
 }
 
 int GPSController::GPStest(){

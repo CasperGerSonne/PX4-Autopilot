@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include "UartCommander/Serial_port/serial_port.h"
 #include "GPS/GPSController.hpp"
+#include <cmath>
+
+#include <uORB/topics/vehicle_local_position.h>
 bool uintcontains(uint8_t value, uint8_t* list,int length){
 	for (int i = 0; i< length ; i++){
 		if(value == list[i]){
@@ -54,29 +57,32 @@ int MovementCommander::activation1(int expectedn){
 
 	GPSController gpsC = *new GPSController();
 
-	const uint8_t N = 2; // change to correspond to enviroment
-	const int PowerMesurrement = -49.34;
+	const double N = 2.0; // change to correspond to enviroment
+	const int PowerMesurrementDB = -66;
+	const int PowerMesurrementDC = -55;
 	int bytes_read = 0;
 	int totbytes = 0;
 
-
-
 	double DistDB;
 	double DistDC;
-
-
 	double DistCB;
 
-	double* waypoint;
+	double* RSSIDB = new double[5];
+	double* RSSIDC = new double[5];
+
+	double movedDistance = 0;
+
+
 
 	bool isflying = false;
 	hrt_abstime lastbytesread= 0;
 
-
 	uint8_t* data = new uint8_t[expectedn];
 	uint8_t* buffer = new uint8_t[expectedn];
 
-
+	struct timespec ts;
+	uint64_t Unix_epoch_time;
+	printf("epoch_time : RSSIBD : RSSIDC : DistDB : DistDC : DistBC : flying : movement\n");
 	while(true){
 		//stay in goto struct point
 
@@ -89,7 +95,7 @@ int MovementCommander::activation1(int expectedn){
 		//add to data if having read something
 		if (bytes_read > 0){
 			if((hrt_absolute_time()-lastbytesread) >= 50000){
-				printf("reset because end of message with totbytes = %d\n",totbytes);
+
 				totbytes = 0;
 			}
 
@@ -110,226 +116,235 @@ int MovementCommander::activation1(int expectedn){
 		if ((totbytes != expectedn)){
 			continue;
 		}
-
-		for (int i = 0; i < totbytes; i++) {
-			printf("%c: ", static_cast<char>(data[i]));
+		if (data[0] != 0 & data[expectedn-1]!=255){
+			continue;
 		}
 
-		printf("\n");
-		DistDB = 10^((PowerMesurrement + data[1])/10*N);
-		DistDC = 10^((PowerMesurrement + data[2])/10*N);
-		printf("Rssi0 %d\n", data[1]);
-		printf("Rssi1 %d\n", data[2]);
 
-		printf("DistDB %f\n", DistDB);
-		printf("DistDC %f\n", DistDC);
 
-		DistCB = (cos(asin(1.5/DistDB)*DistDB)) + (cos(asin(1.5/DistDC))*DistDC);
-		printf("thought distance between base and board: %f",DistCB);
-		//assuming 1d motion and the drone being perfect on line
+		// calculate distannces
+		DistDB = pow(10.0,((PowerMesurrementDB + (double)data[1])/(10.0*N)));
+		DistDC = pow(10.0,((PowerMesurrementDC + (double)data[2])/(10.0*N)));
+
+		if (isflying){
+
+			DistCB = (cos(asin(0/DistDB))*DistDB) + (cos(asin(0/DistDC))*DistDC);
+		}else{
+			DistCB = DistDB + DistDC;
+		}
+
 		totbytes = 0;
 
-		if (data[2] > 60){
+		if (data[2] == 1){
 
 			if (isflying){
-				printf("Is flying landing\n");
-				waypoint = gpsC.createWaypoint(0,0,1.5);
-				send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
-									0.5,
-									vehicle_command_s::SPEED_TYPE_AIRSPEED,
-									NAN,
-									NAN,
-									waypoint[0],
-									waypoint[1],
-									waypoint[2]
-									);
 
-				sleep(2);
-				send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
-				sleep(5);
+				gpsC.createRelativeWaypoint(-movedDistance,0,0);
+				movedDistance = 0;
+
+
+				//send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
+
+
 				isflying = false;
-				continue;
+
+
+
 			}else{
-				printf("on ground no need to move\n");
-				continue;
+
+
+
 			}
 		}
 		//board is too far away
 		else{
 			if (!isflying){
-				printf("Taking off\n");
-				const char *takeoff = "takeoff";
-				char* takeoffPtr = const_cast<char*>(takeoff);
-				Commander::custom_command(1, &takeoffPtr);
 
-				sleep(5);
+				//
+				//const char *takeoff = "takeoff";
+				////
+				//char* takeoffPtr = const_cast<char*>(takeoff);
+				////
+				//Commander::custom_command(1, &takeoffPtr);
 
-				waypoint = gpsC.createWaypoint(-DistCB,0,1.5);
-				printf("moving to %f",waypoint[0]);
-				send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
-									0.5,
-									vehicle_command_s::SPEED_TYPE_AIRSPEED,
-									NAN,
-									NAN,
-									waypoint[0],
-									waypoint[1],
-									waypoint[2]
-									);
+
+				gpsC.createRelativeWaypoint( (-DistCB/2) - movedDistance ,0,0);
+				if (data[1] > data[2]){
+					movedDistance = movedDistance +1;
+				}
+				else{
+					movedDistance = movedDistance -1;
+				}
+
+
 				isflying = true;
-				continue;
+
 			}else{
-				printf("isflying doing movement\n");
-				waypoint = gpsC.createWaypoint(-DistCB,0,1.5);
-				printf("moving to %f",waypoint[0]);
-				send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
-									0.5,
-									vehicle_command_s::SPEED_TYPE_AIRSPEED,
-									NAN,
-									NAN,
-									waypoint[0],
-									waypoint[1],
-									waypoint[2]
-									);
-				continue;
+
+				gpsC.createRelativeWaypoint((-DistCB/2) - movedDistance ,0,0);
+				if (data[1] > data[2]){
+					movedDistance = movedDistance +1;
+				}
+				else{
+					movedDistance = movedDistance -1;
+				}
+
+
+
+
 			}
 		}
+
+		clock_gettime(CLOCK_REALTIME, &ts);
+
+		Unix_epoch_time = ts.tv_sec;
+
+		printf("%llu : %d : %d : %f : %f : %f : %d : %f \n",Unix_epoch_time, data[1], data[2], DistDB, DistDC, DistCB, isflying, movedDistance);
+
 	}
 
 	return 0;
 
-
 }
-//int MovementCommander::gototest(){
-//
-//
-//    		goto_setpoint_s goto_setpoint_s1{};
-//		goto_setpoint_s goto_setpoint_s2{};
-//		orb_advert_t goto_pub1 = orb_advertise(ORB_ID(goto_setpoint), &goto_setpoint_s1);
-//		orb_advert_t goto_pub2 = orb_advertise(ORB_ID(goto_setpoint), &goto_setpoint_s2);
-//		goto_setpoint_s1.position[0] = 0;
-//		goto_setpoint_s1.position[1] = 0;
-//		goto_setpoint_s1.position[2] = 0;
-//		goto_setpoint_s1.heading = 0;
-//		goto_setpoint_s1.max_horizontal_speed = 1;
-//		goto_setpoint_s1.max_vertical_speed = 1;
-//		goto_setpoint_s1.max_heading_rate = 0;
-//		goto_setpoint_s1.flag_control_heading = true;
-//		goto_setpoint_s1.flag_set_max_horizontal_speed = true;
-//		goto_setpoint_s1.flag_set_max_vertical_speed = true;
-//		goto_setpoint_s1.flag_set_max_heading_rate = true;
-//
-//		goto_setpoint_s2.position[0] = 0;
-//		goto_setpoint_s2.position[1] = 0;
-//		goto_setpoint_s2.position[2] = -2;
-//		goto_setpoint_s2.heading = 0;
-//		goto_setpoint_s2.max_horizontal_speed = 1;
-//		goto_setpoint_s2.max_vertical_speed = 1;
-//		goto_setpoint_s2.max_heading_rate = 0;
-//		goto_setpoint_s2.flag_control_heading = true;
-//		goto_setpoint_s2.flag_set_max_horizontal_speed = true;
-//		goto_setpoint_s2.flag_set_max_vertical_speed = true;
-//		goto_setpoint_s2.flag_set_max_heading_rate = true;
-//
-//		for (int i = 1; i< argc; i++){
-//			if(!strcmp(argv[i], "-x")){
-//				goto_setpoint_s2.position[0] = atoi(argv[i+1]);
-//			}
-//			if(!strcmp(argv[i], "-y")){
-//				goto_setpoint_s2.position[1] = atoi(argv[i+1]);
-//			}
-//			if(!strcmp(argv[i], "-z")){
-//				goto_setpoint_s2.position[2] = atoi(argv[i+1]);
-//			}
-//
-//		}
-//		printf("Takeoff");
-//		const char *takeoff = "takeoff";
-//		char* takeoffPtr = const_cast<char*>(takeoff);
-//		Commander::custom_command(1, &takeoffPtr);
-//
-//		sleep(7);
-//		printf("first send move\n");
-//		goto_setpoint_s2.timestamp = hrt_absolute_time();
-//		orb_publish(ORB_ID(goto_setpoint), goto_pub2 , &goto_setpoint_s2);
-//
-//		for(int i = 0; i<50;i++){
-//			goto_setpoint_s1.timestamp = hrt_absolute_time();
-//			orb_publish(ORB_ID(goto_setpoint), goto_pub1 , &goto_setpoint_s1);
-//			usleep(200000);
-//		}
-//
-//		printf("Return with goto\n");
-//		goto_setpoint_s2.timestamp = hrt_absolute_time();
-//		goto_setpoint_s2.position[0] = - goto_setpoint_s2.position[0];
-//		goto_setpoint_s2.position[1] = - goto_setpoint_s2.position[1] ;
-//		goto_setpoint_s2.position[2] = goto_setpoint_s2.position[2] ;
-//		orb_publish(ORB_ID(goto_setpoint), goto_pub2 , &goto_setpoint_s2);
-//
-//		for (int i = 0; i<20;i++){
-//			goto_setpoint_s1.timestamp = hrt_absolute_time();
-//			orb_publish(ORB_ID(goto_setpoint), goto_pub1 , &goto_setpoint_s1);
-//			usleep(200000);
-//		}
-//
-//		sleep(4);
-//		printf("Landing");
-//		send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
-//		return 0;
-//}
-
-int MovementCommander::repos(float x, float y,float z){
-    		GPSController gpsC = *new GPSController();
-		double* startpoint = gpsC.getstart();
-		float latmeters = x;
-		float longmeters = y;
-		float alt = z;
 
 
+double* MovementCommander::repos(float x, float y,float z,GPSController gpsC){
 
-		double* waypoint = gpsC.createWaypoint(latmeters,longmeters,alt);
-		printf("startpoint: lat %lf; lon %lf; alt %lf\n", startpoint[0],startpoint[1],startpoint[2]);
-		printf("coordinate: lat %lf; lon %lf; alt %lf\n", waypoint[0],waypoint[1],waypoint[2]);
+		double* waypoint = gpsC.createRelativeWaypoint(x,y,z);
 
 		send_vehicle_command(vehicle_command_s::VEHICLE_CMD_DO_REPOSITION,
-										0.5,
+										airspeed,
 										vehicle_command_s::SPEED_TYPE_AIRSPEED,
 										NAN,
 										NAN,
 										waypoint[0],
 										waypoint[1],
-										waypoint[2]
+										NAN
 										);
-		printf("Donne\n");
 
-		return 0;
+
+		return waypoint;
 }
+double mean(double* arr, n){
+	double c = 0;
+	for (int i = 0; i<n,i++){
+		c = c + arr[i];
+	}
+	return c/n
+}
+int MovementCommander::repostest(){
 
-void MovementCommander::repostest(){
-	const char *takeoff = "takeoff";
-	char* takeoffPtr = const_cast<char*>(takeoff);
-	Commander::custom_command(1, &takeoffPtr);
 
-	sleep(3);
 
-	printf("Move x -3\n");
-	repos(-3,0,0);
-	sleep(5);
-	printf("Move x 3\n");
-	repos(3,0,0);
-	sleep(5);
-	printf("Move y -2\n");
-	repos(0,-2,0);
-	sleep(5);
-	printf("Move y 2\n");
-	repos(0,2,0);
-	sleep(5);
-	printf("Move zå-2\n");
-	repos(0,0,-2);
-	sleep(5);
-	printf("Move z 2\n");
-	repos(0,0,2);
-	sleep(3);
-	send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
+	GPSController gpsC = *new GPSController();
 
+	const double N = 2.0; // change to correspond to enviroment
+	const int PowerMesurrement = -57.1857;
+
+	uint8_t dataDC[41] = { 1, 1, 86, 82, 76, 70, 70, 72, 82, 79, 87, 89, 81, 82, 87, 86, 90, 80, 85, 88, 92, 94, 90, 74, 76, 81, 88, 85, 86, 87, 1, 1,1, 1};
+	uint8_t dataDB[41] = { 69, 70, 75, 82, 81, 81, 85, 79, 67, 72, 67, 72, 68, 71, 69, 67, 80, 73, 70, 77, 71, 73, 75, 73, 71, 70, 73, 76, 73, 83, 69, 70, 69, 70};
+
+	double DistDB;
+	double DistDC;
+	double* DistCB = new double[5];
+	double avgDistCB;
+	int CBcount = 0;
+
+	double movedDistance = 0;
+
+	double* waypoint = gpsC.getstart();
+	double * distanceToStart;
+
+	bool isflying = false;
+
+	struct timespec ts;
+	uint64_t Unix_epoch_time;
+
+	double lastadded = 0;
+	printf("epoch_time : RSSIBD : RSSIDC : DistDB : DistDC : DistBC : flying : dx : dy : dz\n");
+	for(int i = 0; i < 34; i++){
+
+		DistDB = pow(10.0,((PowerMesurrement + (double)dataDB[i])/(10.0*N)));
+		DistDC = pow(10.0,((PowerMesurrement + (double)dataDC[i])/(10.0*N)));
+
+		if (CBcount = 0 ){
+			DistCB[CBcount] = DistDB + DistDC;
+			lastadded = DistCB[CBcount];
+			CBcount++;
+
+		}
+		else{
+			if (abs(lastadded - (DistDB + DistDC)) <= 4){
+				DistCB[CBcount] = DistDB + DistDC;
+				CBcount++;
+			} else if (lastadded - (DistDB + DistDC) >){
+				lastadded += 4;
+			} else{
+				lastadded -= 4
+			}
+		}
+
+		if (CBcount != 4){
+			continue;
+		} else{
+			avgDistCB = mean(DistCB,5);
+			CBcount = 0;
+		}
+
+
+		// calculate distannces
+
+
+		if (dataDC[i] == 1){
+
+			if (isflying){
+
+				waypoint = repos(0,0,0,gpsC);
+				movedDistance = 0;
+
+
+				send_vehicle_command(vehicle_command_s::VEHICLE_CMD_NAV_LAND);
+
+
+				isflying = false;
+		}
+		//board is too far away
+		else{
+			if (!isflying){
+
+				const char *takeoff = "takeoff";
+				char* takeoffPtr = const_cast<char*>(takeoff);
+				Commander::custom_command(1, &takeoffPtr);
+
+
+				waypoint = repos( (-avgDistCB/2),0,0,gpsC);
+				movedDistance = movedDistance + ((-avgDistCB/2) - movedDistance);
+
+				isflying = true;
+
+
+
+			}else{
+
+				waypoint = repos((-avgDistCB/2) ,0,0,gpsC);
+				movedDistance = movedDistance + ((-avgDistCB/2) - movedDistance);
+
+
+
+
+			}
+		}
+
+		clock_gettime(CLOCK_REALTIME, &ts);
+
+		Unix_epoch_time = ts.tv_sec;
+
+		distanceToStart = gpsC.calculateDistances(waypoint,gpsC.getstart());
+
+		printf("%llu : %d : %d : %f : %f : %f : %d : %f : %f : %f : %f\n",Unix_epoch_time, dataDB[i], dataDC[i], DistDB, DistDC, DistCB, isflying, movedDistance, distanceToStart[0],distanceToStart[1],distanceToStart[2]);
+
+	}
+
+	return 0;
 
 }

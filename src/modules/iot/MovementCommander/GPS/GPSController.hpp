@@ -5,6 +5,8 @@
 #include <px4_platform_common/px4_config.h>
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/uORB.h>
+#include <drivers/drv_hrt.h>
+#include <uORB/Subscription.hpp>
 
 
 class GPSController {
@@ -15,6 +17,8 @@ private:
     struct sensor_gps_s gps_s;
 
     double* Startpoint = new double[3];
+
+    double* currwaypoint = new double[3];
 
 
 
@@ -32,17 +36,23 @@ public:
 
     bool getposition(double *latitude, double *longitude, double *altitude);
     double* getDistances();
-    double* createWaypoint(double  x,double  y,double z);
+    double* createRelativeWaypoint(double  x,double  y,double z);
 
     double metersToLongitude(double meters);
     double metersToLatitude(double meters);
     double longitudeToMeters(double longitude);
     double latitudeToMeters(double latitude);
+    double* calculateDistances(double* waypoint, double* basepoint);
 
     int GPStest();
 
 
     double* getstart();
+
+
 };
 
+inline double deg2rad(double deg) {
+    return deg * (M_PI / 180.0);
+}
 #endif /* GPS_CONTROLLER_HPP */

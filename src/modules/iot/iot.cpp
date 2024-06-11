@@ -107,11 +107,8 @@ int iot::custom_command(int argc, char *argv[])
 		UartCommander uartCom = *new UartCommander();
 		uartCom.Uart_Rxtest2(expected);
 	}
-	//else if (!strcmp(argv[0], "goto")){
-	//	MovementCommander movecom = *new MovementCommander();
-	//	movecom.gototest();
-//
-	//}
+
+
 
 	else if (!strcmp(argv[0], "act1d")){
 
@@ -131,41 +128,19 @@ int iot::custom_command(int argc, char *argv[])
 
 	}
 
-	else if (!strcmp(argv[0], "repos")){
-		MovementCommander movecom = *new MovementCommander();
-		float latmeters = 0;
-		float longmeters = 0;
-		float alt = 0;
-
-		for (int i = 1; i< argc; i++){
-			if(!strcmp(argv[i], "-x")){
-				printf("latarg: %s\n",argv[i+1]);
-				latmeters = atoi(argv[i+1]);
-			}
-			if(!strcmp(argv[i], "-y")){
-				printf("lonarg: %s\n",argv[i+1]);
-				longmeters = atoi(argv[i+1]);
-			}
-			if(!strcmp(argv[i], "-z")){
-				printf("altarg: %s\n",argv[i+1]);
-				alt  =  atoi(argv[i+1]);
-			}
-		}
-		movecom.repos(latmeters,longmeters,alt);
-
-	}
-
 
 	else if (!strcmp(argv[0], "GPStest")){
 		GPSController gpscontroller = *new GPSController();
 		gpscontroller.GPStest();
 
 	}
+
 	else if (!strcmp(argv[0], "repostest")){
 		MovementCommander movecom = *new MovementCommander();
 		movecom.repostest();
 
 	}
+
 
 
 	return print_usage("unknown command");
@@ -194,51 +169,11 @@ int iot::task_spawn(int argc, char *argv[])
 
 void iot::run()
 {
-	//const char *takeoff = "takeoff";
-	//char* takeoffPtr = const_cast<char*>(takeoff);
-	//Commander::custom_command(1, &takeoffPtr);
-	//sleep(7);
-	//Serial_Port serial_port("/dev/ttyS1", 115200);
-	//serial_port.start();
-	//int bytes_read;
-	//uint8_t* data = new uint8_t[6];
-	//uint8_t distances[6];
-	//while (!should_exit()) {
-	//	bytes_read = serial_port._read_port(*data,1,200);
-	//	printf("Bytes recieved %d\n",bytes_read);
-	//	if (bytes_read >= 1){
-//
-	//		for (int i = 0; i < bytes_read; ++i) {
-	//			distances[i] = data[i];
-	//			printf("Distance %d is %u\n",i,distances[i]);
-	//		}
-//
-//
-	//		uint8_t furthest = 0;
-	//		for (int i = 0;i < 6; i++){
-	//			furthest = mymax(furthest,distances[i]);
-	//		}
-	//		if (furthest > 5){
-	//			changePoint(0,furthest/2,-1.5);
-	//		}else{
-	//			changePoint(0,0,-1.5);
-	//		}
-	//	}else{changePoint(0,0,-1.5);}
-//
-//
-	//	printf("X: %f  Y: %f  Z: %f\n",(double)_goto_point.position[0],(double)_goto_point.position[1],(double)_goto_point.position[2]);
-//
-//
-	//	publishPoint();
-//
-//
-	//}
+
 	while (!should_exit()) {
+
 		sleep(1);
 	}
-	sleep(10);
-
-
 
 }
 
